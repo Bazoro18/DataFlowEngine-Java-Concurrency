@@ -1,23 +1,26 @@
-public class LogProcessor implements Runnable{
+public class LogProcessor implements Runnable {
     private final LogEvent event;
-    private final Aggregator aggregator;
+    private final AtomicStatusUpdater atomicStatusUpdater;
 
-    public LogProcessor(LogEvent event, Aggregator aggregator) {
+    public LogProcessor(LogEvent event, AtomicStatusUpdater atomicStatusUpdater) {
         this.event = event;
-        this.aggregator = aggregator;
+        this.atomicStatusUpdater = atomicStatusUpdater;
     }
 
     @Override
-    public void run(){
-        if(event.status != 200){
+    public void run() {
+        // Only process successful (status 200) events
+        if (event.getStatus() != 200) {
             return;
         }
-        //int normalizedLatency = Math.min(300,event.latency);
-        //System.out.printf("Processed [%s] %s -> %dms%n", event.endpoint, event.ip, normalizedLatency);
+
         try {
-            Thread.sleep(100);
-        } catch (InterruptedException  ignored) {
+            Thread.sleep(10);  // Simulate processing time
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt(); // Best practice: reset interrupt flag
         }
-        aggregator.update(event);
+
+        // Send processed event for atomic aggregation
+        atomicStatusUpdater.update(event);
     }
 }
